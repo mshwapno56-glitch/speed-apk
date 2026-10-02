@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>নেট স্পিড টেস্ট</title>
+<style>
+  :root{
+    --bg:#0A0E14;
+    --bg-panel:#10151F;
+    --line:#1E2634;
+    --cyan:#00E5D0;
+    --amber:#FFB454;
+    --pink:#FF5D8F;
+    --text:#E7ECF3;
+    --muted:#6C7A8F;
+    --font-display:'Space Grotesk', 'Segoe UI', sans-serif;
+    --font-body:'Hind Siliguri', 'Noto Sans Bengali', 'Segoe UI', sans-serif;
+  }
+  @font-face{
+    font-family:'Space Grotesk';
+    src:local('Space Grotesk');
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,229,208,0.08), transparent),
+      var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+  .wrap{
+    width:100%;
+    max-width:560px;
+  }
+  .eyebrow{
+    font-family:var(--font-display);
+    letter-spacing:0.35em;
+    text-transform:uppercase;
+    font-size:11px;
+    color:var(--muted);
+    text-align:center;
+    margin-bottom:6px;
+  }
+  h1{
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:22px;
+    text-align:center;
+    margin:0 0 28px;
+    color:var(--text);
+  }
+
+  .scope{
+    position:relative;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:28px 20px 20px;
+    overflow:hidden;
+  }
+  .scope::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image: linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+                       linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 24px 24px;
+    pointer-events:none;
+  }
+
+  .wave-holder{
+    position:relative;
+    height:90px;
+    margin-bottom:10px;
+  }
+  svg.wave{width:100%;height:100%;display:block;}
+  .wave-path{
+    fill:none;
+    stroke:var(--cyan);
+    stroke-width:2;
+    filter: drop-shadow(0 0 6px rgba(0,229,208,0.55));
+  }
+
+  .dial-row{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:0;
+    margin:10px 0 22px;
+  }
+  .dial{
+    position:relative;
+    width:220px;
+    height:220px;
+  }
+  .dial svg{width:100%;height:100%;transform:rotate(-90deg);}
+  .dial-track{fill:none;stroke:var(--line);stroke-width:10;}
+  .dial-fill{
+    fill:none;stroke:url(#dialGrad);stroke-width:10;stroke-linecap:round;
+    transition:stroke-dashoffset 0.25s ease-out;
+    filter: drop-shadow(0 0 8px rgba(0,229,208,0.35));
+  }
+  .dial-center{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .dial-num{
+    font-family:var(--font-display);
+    font-size:46px;
+    font-weight:700;
+    line-height:1;
+    color:var(--text);
+    font-variant-numeric:tabular-nums;
+  }
+  .dial-unit{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    margin-top:6px;
+  }
+  .dial-phase{
+    font-size:11px;
+    color:var(--cyan);
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    margin-top:4px;
+    min-height:14px;
+  }
+
+  .stats{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    margin-bottom:20px;
+    position:relative;
+  }
+  .stat{
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:12px 8px;
+    text-align:center;
+  }
+  .stat-label{
+    font-size:10px;
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin-bottom:6px;
+  }
+  .stat-val{
+    font-family:var(--font-display);
+    font-size:20px;
+    font-weight:700;
+    font-variant-numeric:tabular-nums;
+  }
+  .stat.download .stat-val{color:var(--cyan);}
+  .stat.upload .stat-val{color:var(--pink);}
+  .stat.ping .stat-val{color:var(--amber);}
+
+  .btn-row{position:relative;text-align:center;}
+  button.go{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    background:var(--cyan);
+    color:#04201C;
+    border:none;
+    border-radius:999px;
+    padding:14px 38px;
+    cursor:pointer;
+    transition:transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    box-shadow:0 0 0 rgba(0,229,208,0);
+  }
+  button.go:hover:not(:disabled){
+    transform:translateY(-1px);
+    box-shadow:0 6px 24px rgba(0,229,208,0.25);
+  }
+  button.go:active:not(:disabled){transform:translateY(0);}
+  button.go:disabled{opacity:0.5;cursor:default;}
+  button.go:focus-visible{outline:2px solid var(--text);outline-offset:3px;}
+
+  .footnote{
+    text-align:center;
+    font-size:11px;
+    color:var(--muted);
+    margin-top:16px;
+    line-height:1.6;
+  }
+  .footnote a{color:var(--muted);}
+
+  @media (max-width:420px){
+    .dial{width:180px;height:180px;}
+    .dial-num{font-size:36px;}
+    .stat-val{font-size:16px;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .dial-fill{transition:none;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">নেটওয়ার্ক ডায়াগনস্টিক</div>
+  <h1>আপনার ইন্টারনেট স্পিড চেক করুন</h1>
+
+  <div class="scope">
+    <div class="wave-holder">
+      <svg class="wave" viewBox="0 0 400 90" preserveAspectRatio="none">
+        <path class="wave-path" id="wavePath" d="M0,45 L400,45"></path>
+      </svg>
+    </div>
+
+    <div class="dial-row">
+      <div class="dial">
+        <svg viewBox="0 0 200 200">
+          <defs>
+            <linearGradient id="dialGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00E5D0"/>
+              <stop offset="100%" stop-color="#5CE1FF"/>
+            </linearGradient>
+          </defs>
+          <circle class="dial-track" cx="100" cy="100" r="88"></circle>
+          <circle class="dial-fill" id="dialFill" cx="100" cy="100" r="88"
+                  stroke-dasharray="552.9" stroke-dashoffset="552.9"></circle>
+        </svg>
+        <div class="dial-center">
+          <div class="dial-num" id="dialNum">০.০</div>
+          <div class="dial-unit">Mbps</div>
+          <div class="dial-phase" id="dialPhase">শুরু করতে বাটনে চাপুন</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat ping">
+        <div class="stat-label">পিং</div>
+        <div class="stat-val"><span id="pingVal">--</span> ms</div>
+      </div>
+      <div class="stat download">
+        <div class="stat-label">ডাউনলোড</div>
+        <div class="stat-val"><span id="downVal">--</span></div>
+      </div>
+      <div class="stat upload">
+        <div class="stat-label">আপলোড</div>
+        <div class="stat-val"><span id="upVal">--</span></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="go" id="startBtn">টেস্ট শুরু করুন</button>
+    </div>
+  </div>
+
+  <div class="footnote">
+    ডেটা Cloudflare-এর পাবলিক স্পিড টেস্ট সার্ভার ব্যবহার করে মাপা হয়।<br>
+    ফলাফল আপনার ব্রাউজার, ওয়াইফাই এবং একই সময়ে চলা অন্যান্য অ্যাপের উপর নির্ভর করে ভিন্ন হতে পারে।
+  </div>
+</div>
+
+<script>
+(function(){
+  const startBtn   = document.getElementById('startBtn');
+  const dialNum    = document.getElementById('dialNum');
+  const dialPhase  = document.getElementById('dialPhase');
+  const dialFill   = document.getElementById('dialFill');
+  const pingVal    = document.getElementById('pingVal');
+  const downVal    = document.getElementById('downVal');
+  const upVal      = document.getElementById('upVal');
+  const wavePath   = document.getElementById('wavePath');
+
+  const CIRC = 2 * Math.PI * 88; // ~552.9
+
+  // Bengali digit conversion for the big dial number (keeps stat boxes in normal digits for clarity)
+  const bnDigits = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
+  function toBn(str){
+    return String(str).replace(/[0-9]/g, d => bnDigits[d]);
+  }
+
+  function setDial(mbps, maxScale){
+    const pct = Math.max(0, Math.min(1, mbps / maxScale));
+    dialFill.style.strokeDashoffset = CIRC * (1 - pct);
+    dialNum.textContent = toBn(mbps.toFixed(mbps < 10 ? 2 : 1));
+  }
+
+  // Animated waveform, amplitude reacts to "activity" level (0..1)
+  let waveT = 0;
+  let waveAmp = 6;
+  let waveActive = false;
+  function drawWave(){
+    waveT += 0.12;
+    let d = 'M0,45 ';
+    for (let x = 0; x <= 400; x += 8){
+      const n = waveActive
+        ? Math.sin(x/22 + waveT) * waveAmp + Math.sin(x/9 - waveT*1.7) * (waveAmp*0.35)
+        : Math.sin(x/60 + waveT*0.3) * 2.5;
+      d += `L${x},${45 + n} `;
+    }
+    wavePath.setAttribute('d', d);
+    requestAnimationFrame(drawWave);
+  }
+  requestAnimationFrame(drawWave);
+
+  function fmtSpeed(mbps){
+    if (mbps >= 1000) return (mbps/1000).toFixed(2) + ' Gbps';
+    return mbps.toFixed(mbps < 10 ? 2 : 1) + ' Mbps';
+  }
+
+  function bust(url){
+    return url + (url.includes('?') ? '&' : '?') + 'cachebust=' + Math.random().toString(36).slice(2);
+  }
+
+  // ---- PING TEST ----
+  async function runPing(samples = 6){
+    const times = [];
+    for (let i = 0; i < samples; i++){
+      const url = bust('https://speed.cloudflare.com/__down?bytes=0');
+      const t0 = performance.now();
+      try{
+        await fetch(url, { cache: 'no-store', mode: 'cors' });
+        const t1 = performance.now();
+        times.push(t1 - t0);
+      }catch(e){ /* skip a failed sample */ }
+    }
+    if (times.length === 0) throw new Error('ping failed');
+    times.sort((a,b)=>a-b);
+    // drop the slowest ones (warm-up / connection setup noise), use median of the rest
+    const trimmed = times.slice(0, Math.max(1, times.length - 2));
+    const median = trimmed[Math.floor(trimmed.length/2)];
+    return median;
+  }
+
+  // ---- DOWNLOAD TEST ----
+  // Streams a large file and reports live speed via onProgress(instMbps, avgMbps)
+  async function runDownload(onProgress, totalBytesTarget = 60_000_000, timeLimitMs = 9000){
+    const url = bust(`https://speed.cloudflare.com/__down?bytes=${totalBytesTarget}`);
+    const t0 = performance.now();
+    const res = await fetch(url, { cache: 'no-store', mode: 'cors' });
+    if (!res.body) throw new Error('stream not supported');
+    const reader = res.body.getReader();
+
+    let received = 0;
+    let lastTick = t0;
+    let lastBytes = 0;
+
+    while (true){
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.length;
+      const now = performance.now();
+
+      if (now - lastTick > 200){
+        const instMbps = ((received - lastBytes) * 8) / ((now - lastTick) / 1000) / 1_000_000;
+        const avgMbps  = (received * 8) / ((now - t0) / 1000) / 1_000_000;
+        onProgress(instMbps, avgMbps);
+        lastTick = now;
+        lastBytes = received;
+      }
+
+      if (now - t0 > timeLimitMs){
+        try{ await reader.cancel(); }catch(e){}
+        break;
+      }
+    }
+    const t1 = performance.now();
+    const avgMbps = (received * 8) / ((t1 - t0) / 1000) / 1_000_000;
+    return avgMbps;
+  }
+
+  // ---- UPLOAD TEST ----
+  // Uses XHR for real upload progress events (fetch has no upload progress).
+  function runUpload(onProgress, sizeBytes = 12_000_000, timeLimitMs = 8000){
+    return new Promise((resolve, reject) => {
+      const data = new Uint8Array(sizeBytes);
+      // fill with pseudo-random-ish data so it isn't trivially compressible
+      for (let i = 0; i < data.length; i += 997) data[i] = (i * 2654435761) & 0xff;
+      const blob = new Blob([data]);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', bust('https://speed.cloudflare.com/__up'), true);
+      const t0 = performance.now();
+      let lastTick = t0;
+      let lastBytes = 0;
+      let finished = false;
+
+      const timeout = setTimeout(() => {
+        if (!finished){ finished = true; xhr.abort(); }
+      }, timeLimitMs);
+
+      xhr.upload.onprogress = (e) => {
+        const now = performance.now();
+        if (now - lastTick > 200){
+          const instMbps = ((e.loaded - lastBytes) * 8) / ((now - lastTick) / 1000) / 1_000_000;
+          const avgMbps  = (e.loaded * 8) / ((now - t0) / 1000) / 1_000_000;
+          onProgress(instMbps, avgMbps);
+          lastTick = now;
+          lastBytes = e.loaded;
+        }
+      };
+      xhr.onloadend = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeout);
+        const t1 = performance.now();
+        const avgMbps = (sizeBytes * 8) / ((t1 - t0) / 1000) / 1_000_000;
+        resolve(avgMbps);
+      };
+      xhr.onerror = () => {
+        if (finished) return;
+        finished = true;
+        clearTimeout(timeout);
+        reject(new Error('upload failed'));
+      };
+      xhr.send(blob);
+    });
+  }
+
+  async function runAll(){
+    startBtn.disabled = true;
+    startBtn.textContent = 'চলছে...';
+    waveActive = true;
+    pingVal.textContent = '--';
+    downVal.textContent = '--';
+    upVal.textContent = '--';
+    setDial(0, 100);
+
+    try{
+      // PING
+      dialPhase.textContent = 'পিং মাপা হচ্ছে';
+      waveAmp = 4;
+      const ping = await runPing();
+      pingVal.textContent = ping.toFixed(0);
+
+      // DOWNLOAD
+      dialPhase.textContent = 'ডাউনলোড স্পিড মাপা হচ্ছে';
+      let dlMax = 100;
+      let finalDown = 0;
+      waveAmp = 10;
+      finalDown = await runDownload((inst, avg) => {
+        waveAmp = 8 + Math.min(20, inst/10);
+        if (inst > dlMax) dlMax = inst * 1.15;
+        setDial(inst, dlMax);
+      });
+      setDial(finalDown, Math.max(dlMax, finalDown * 1.05));
+      downVal.textContent = fmtSpeed(finalDown);
+
+      // UPLOAD
+      dialPhase.textContent = 'আপলোড স্পিড মাপা হচ্ছে';
+      let ulMax = 100;
+      let finalUp = 0;
+      finalUp = await runUpload((inst, avg) => {
+        waveAmp = 8 + Math.min(20, inst/10);
+        if (inst > ulMax) ulMax = inst * 1.15;
+        setDial(inst, ulMax);
+      });
+      setDial(finalUp, Math.max(ulMax, finalUp * 1.05));
+      upVal.textContent = fmtSpeed(finalUp);
+
+      dialPhase.textContent = 'সম্পন্ন';
+      waveActive = false;
+      waveAmp = 6;
+
+    }catch(err){
+      dialPhase.textContent = 'পরীক্ষা ব্যর্থ হয়েছে, আবার চেষ্টা করুন';
+      waveActive = false;
+      console.error(err);
+    }finally{
+      startBtn.disabled = false;
+      startBtn.textContent = 'আবার টেস্ট করুন';
+    }
+  }
+
+  startBtn.addEventListener('click', runAll);
+})();
+</script>
+</body>
+</html>
