@@ -24,7 +24,6 @@
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:
       radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,229,208,0.08), transparent),
       var(--bg);
     color:var(--text);
